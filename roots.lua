@@ -55,10 +55,15 @@ DIR_DOWN_RIGHT = 6
 DIR_UP_LEFT = 7
 DIR_UP_RIGHT = 8
 
-
+-- states
+STATE_INIT = 1
+STATE_MENU = 2
+STATE_GAME = 3
 
 ------ GLOBAL VARIABLES ----------
 t = 0
+x_pos = 96
+y_pos = 24
 state = STATE_INIT
 
 ------ UTILITIES ------
@@ -132,11 +137,6 @@ end
 
 function draw_menu()
     cls(BLACK)
-    --spr(SPRITE_MENU_BOHR,0,40,BLACK,6,0,0,1,2)
-    --spr(SPRITE_MENU_BOHR,192,40,BLACK,6,1,0,1,2)
-    --spr(SPRITE_MENU_CAT_OPEN,64,88,BLACK,3,0,0,2,2)
-    --spr(SPRITE_MENU_CAT_CLOSED,128,88,BLACK,3,1,0,2,2)
-    print_centered("GAME NAME!!", 10, ORANGE, false, 2)
     print_centered("Press Z to start", 75, ORANGE)
 end
 
@@ -147,10 +147,15 @@ end
 
 function draw_game()
     cls(BLACK)
-    print_centered("We are playing!!", 10, ORANGE, false, 2)
+    print_centered("Press X for menu", 75, ORANGE)
+    spr(1+t%60//30*2,x_pos,y_pos,14,3,0,0,2,2)
 end
 
 function handle_input()
+    if btn(BUTTON_UP) then y_pos = y_pos - 1 end
+    if btn(BUTTON_DOWN) then y_pos = y_pos + 1 end
+    if btn(BUTTON_LEFT) then x_pos = x_pos - 1 end
+    if btn(BUTTON_RIGHT) then x_pos = x_pos + 1 end
     if btn(BUTTON_X) then
         state = STATE_MENU
     end
@@ -180,4 +185,34 @@ function handle_move_input(player)
     player.tileX = math.floor(player.x/8)
     player.tileY = math.floor(player.y/8)
 end
+
+
+-- <TILES>
+-- 001:eccccccccc888888caaaaaaaca888888cacccccccacc0ccccacc0ccccacc0ccc
+-- 002:ccccceee8888cceeaaaa0cee888a0ceeccca0ccc0cca0c0c0cca0c0c0cca0c0c
+-- 003:eccccccccc888888caaaaaaaca888888cacccccccacccccccacc0ccccacc0ccc
+-- 004:ccccceee8888cceeaaaa0cee888a0ceeccca0cccccca0c0c0cca0c0c0cca0c0c
+-- 017:cacccccccaaaaaaacaaacaaacaaaaccccaaaaaaac8888888cc000cccecccccec
+-- 018:ccca00ccaaaa0ccecaaa0ceeaaaa0ceeaaaa0cee8888ccee000cceeecccceeee
+-- 019:cacccccccaaaaaaacaaacaaacaaaaccccaaaaaaac8888888cc000cccecccccec
+-- 020:ccca00ccaaaa0ccecaaa0ceeaaaa0ceeaaaa0cee8888ccee000cceeecccceeee
+-- </TILES>
+
+-- <WAVES>
+-- 000:00000000ffffffff00000000ffffffff
+-- 001:0123456789abcdeffedcba9876543210
+-- 002:0123456789abcdef0123456789abcdef
+-- </WAVES>
+
+-- <SFX>
+-- 000:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304000000000
+-- </SFX>
+
+-- <TRACKS>
+-- 000:100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+-- </TRACKS>
+
+-- <PALETTE>
+-- 000:1a1c2c5d275db13e53ef7d57ffcd75a7f07038b76425717929366f3b5dc941a6f673eff7f4f4f494b0c2566c86333c57
+-- </PALETTE>
 
