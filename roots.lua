@@ -157,7 +157,7 @@ function draw_game()
     32, 18, -- width, height
     0, 0) -- screen pos
     draw_teeth()
-    spr(SPR_LOGO,x_pos,y_pos,GREY,1,0,0,2,2)
+    draw_player()
 end
 
 function draw_teeth()
@@ -186,6 +186,10 @@ end
 function draw_tooth(x_tile,y_tile,flip, damaged)
     local sprite = damaged and SPR_TOOTH_DAMAGED or SPR_TOOTH_DEFAULT
     spr(sprite,x_tile*8,y_tile*8,GREEN,1,flip,0,2,2)
+end
+
+function draw_player()
+    spr(SPR_LOGO,x_pos,y_pos,GREY,1,0,0,2,2)
 end
 
 function handle_input()
