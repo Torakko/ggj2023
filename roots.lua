@@ -60,10 +60,41 @@ STATE_INIT = 1
 STATE_MENU = 2
 STATE_GAME = 3
 
+-- entity states
+ENTITY_STATE_DAMAGED = 1
+ENTITY_STATE_DEFAULT = 2
+
 -- sprites
-SPR_TOOTH_DEFAULT = 1
-SPR_TOOTH_DAMAGED = 3
+SPR_TOOTH = {
+    [ENTITY_STATE_DAMAGED] = {sprite=3, width=2, height=2},
+    [ENTITY_STATE_DEFAULT] = {sprite=1, width=2, height=2},
+}
 SPR_LOGO = 33
+
+
+-- entities
+TEETH = {
+    {x=05, y=02, flip=03},
+    {x=07, y=02, flip=03},
+    {x=09, y=02, flip=03},
+    {x=11, y=02, flip=03},
+    {x=13, y=02, flip=03},
+    {x=15, y=02, flip=02},
+    {x=17, y=02, flip=02},
+    {x=19, y=02, flip=02},
+    {x=21, y=02, flip=02},
+    {x=23, y=02, flip=02},
+    {x=05, y=13, flip=01},
+    {x=07, y=13, flip=01},
+    {x=09, y=13, flip=01},
+    {x=11, y=13, flip=01},
+    {x=13, y=13, flip=01},
+    {x=15, y=13, flip=00},
+    {x=17, y=13, flip=00},
+    {x=19, y=13, flip=00},
+    {x=21, y=13, flip=00},
+    {x=23, y=13, flip=00},
+}
 
 ------ GLOBAL VARIABLES ----------
 t = 0
@@ -136,6 +167,7 @@ end
 ------ MENU ---------------
 function update_menu()
     if btnp(BUTTON_Z) then
+        init()
         state = STATE_GAME
     end
 end
@@ -147,6 +179,32 @@ function draw_menu()
 end
 
 ------ GAME ---------------
+function init()
+    t = 0
+    teeth = {}
+    spawn_teeth()
+end
+
+function spawn_teeth()
+    for _, tooth_data in ipairs(TEETH) do
+        spawn_tooth(tooth_data)
+    end
+end
+
+function spawn_tooth(data)
+    local new_tooth = {
+        name=string.format('tooth on %d,%d', data.x, data.y),
+        sprites=SPR_TOOTH,
+        x=data.x*8,
+        y=data.y*8,
+        tileX=data.x,
+        tileY=data.y,
+        flip=data.flip,
+        health=2,
+    }
+    teeth[#teeth+1]=new_tooth
+end
+
 function update_game()
     handle_input()
 end
@@ -161,31 +219,22 @@ function draw_game()
 end
 
 function draw_teeth()
-    draw_tooth(5,2,3)
-    draw_tooth(7,2,3)
-    draw_tooth(9,2,3)
-    draw_tooth(11,2,3)
-    draw_tooth(13,2,3)
-    draw_tooth(15,2,2)
-    draw_tooth(17,2,2)
-    draw_tooth(19,2,2)
-    draw_tooth(21,2,2)
-    draw_tooth(23,2,2)
-    draw_tooth(5,13,1)
-    draw_tooth(7,13,1)
-    draw_tooth(9,13,1)
-    draw_tooth(11,13,1)
-    draw_tooth(13,13,1)
-    draw_tooth(15,13,0)
-    draw_tooth(17,13,0, true)
-    draw_tooth(19,13,0)
-    draw_tooth(21,13,0)
-    draw_tooth(23,13,0)
+    for _, tooth in ipairs(teeth) do
+        draw_tooth(tooth)
+    end
 end
 
-function draw_tooth(x_tile,y_tile,flip, damaged)
-    local sprite = damaged and SPR_TOOTH_DAMAGED or SPR_TOOTH_DEFAULT
-    spr(sprite,x_tile*8,y_tile*8,GREEN,1,flip,0,2,2)
+function draw_tooth(tooth)
+    local sprite_data = tooth.sprites[tooth.health]
+    spr(sprite_data.sprite,
+        tooth.x,
+        tooth.y,
+        BLACK,
+        1,
+        tooth.flip,
+        0,
+        sprite_data.width,
+        sprite_data.height)
 end
 
 function draw_player()
