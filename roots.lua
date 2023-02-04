@@ -110,12 +110,17 @@ TEETH = {
     {x=23, y=13, flip=00},
 }
 
+-- timeouts
+TIMEOUT_SHOT = 1
+
 ------ GLOBAL VARIABLES ----------
 t = 0
 x_pos = 96
 y_pos = 24
 state = STATE_INIT
 player = {}
+timeouts = {}
+bullets = {}
 
 ------ UTILITIES ------
 function add(list, elem)
@@ -171,7 +176,6 @@ function TIC()
         --state = STATE_MENU
         init()
         state = STATE_GAME
-        init_player()
     elseif state == STATE_MENU then
         update_menu()
         draw_menu()
@@ -202,6 +206,9 @@ function init()
     teeth = {}
     candy = {}
     spawn_teeth()
+    init_player()
+    timeouts = {[TIMEOUT_SHOT] = 0}
+    bullets = {}
 end
 
 function spawn_teeth()
@@ -246,6 +253,14 @@ function update_game()
     handle_input()
     update_player()
     update_enemies()
+    update_bullets()
+    --update_timeouts()
+end
+
+function update_timeouts()
+    for i=#timeouts,1,-1 do
+        timeouts[i] = timeouts[i] - 1
+    end
 end
 
 function update_enemies()
@@ -272,6 +287,7 @@ function draw_game()
     draw_teeth()
     draw_enemies()
     draw_player()
+    draw_bullets()
 end
 
 function draw_teeth()
@@ -328,6 +344,16 @@ function draw_player()
         1, 0, SPR_PLAYER[player.state].rotation)
 end
 
+function draw_bullets()
+    for _, bullet in ipairs(bullets) do
+        rect(bullet.x,
+             bullet.y,
+             3,
+             3,
+             ORANGE)
+    end
+end
+
 function handle_input()
     if player.state == ENTITY_STATE_LOWER_ROW or player.state == ENTITY_STATE_UPPER_ROW then
         handle_input_on_row()
@@ -355,6 +381,26 @@ function handle_input_on_row()
         player.x = player.x + 1
         player.x = math.min(player.x, max_pos)
     end
+    if btnp(BUTTON_Z) then
+        shoot()
+    end
+end
+
+function shoot()
+    if timeouts[TIMEOUT_SHOT] > 0 then
+        return
+    end
+    timeouts[TIMEOUT_SHOT] = 20
+    bullet = {x=player.x, y=player.y}
+    bullet.dx = 0
+    if player.state == ENTITY_STATE_UPPER_ROW then
+        bullet.dy = 1
+    elseif player.state == ENTITY_STATE_LOWER_ROW then
+        bullet.dy = -1
+    end
+    add(bullets, bullet)
+    -- spawn bullet
+    -- start timeout
 end
 
 function update_player()
@@ -362,6 +408,16 @@ function update_player()
         player.state = ENTITY_STATE_UPPER_ROW
     elseif player.state == ENTITY_STATE_GOING_DOWN then
         player.state = ENTITY_STATE_LOWER_ROW
+    end
+end
+
+function update_bullets()
+    for i, bullet in ipairs(bullets) do
+        bullet.x = bullet.x + bullet.dx
+        bullet.y = bullet.y + bullet.dy
+        if bullet.y > HEIGHT or bullet.y < 0 or bullet.x > WIDTH or bullet.x < 0 then
+            del(bullets, bullet)
+        end
     end
 end
 
