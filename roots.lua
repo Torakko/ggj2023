@@ -70,6 +70,8 @@ SPR_TOOTH = {
     [ENTITY_STATE_DEFAULT] = {sprite=1, width=2, height=2},
 }
 SPR_LOGO = 33
+SPR_PLAYER = {
+    [ENTITY_STATE_ON_ROW
 SPR_PLAYER_STRAIGHT = 256
 SPR_PLAYER_TILTED = 257
 
@@ -163,7 +165,8 @@ end
 function TIC()
     if state == STATE_INIT then
         --music(02)
-        state = STATE_MENU
+        --state = STATE_MENU
+        state = STATE_GAME
         init_player()
     elseif state == STATE_MENU then
         update_menu()
@@ -264,12 +267,14 @@ function draw_player()
 
     x_pos = PLAYER_X_MIN + player.x
     if player.row == ROW_UPPER then
-        y_pos = 8
+        y_pos = 6
+        rotation = 2
     else
-        y_pos = HEIGHT - 16
+        y_pos = HEIGHT - 14
+        rotation = 0
     end
 
-    spr(SPR_PLAYER_STRAIGHT,x_pos,y_pos,BLACK)
+    spr(SPR_PLAYER_STRAIGHT,x_pos,y_pos,BLACK, 1, 0, rotation)
 end
 
 function handle_input()
