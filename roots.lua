@@ -261,8 +261,8 @@ function spawn_teeth()
                     x=x,
                     y=y,
                     flip=2,
-                    health=2,--TOOTH_HEALTH_MAX,
-                    shield=2,
+                    health=TOOTH_HEALTH_MAX,
+                    shield=0,
                     width=16,
                     height=16})
         local y = lower_row_y
@@ -270,8 +270,8 @@ function spawn_teeth()
                     x=x,
                     y=y,
                     flip=0,
-                    health=1,
-                    shield=1,
+                    health=TOOTH_HEALTH_MAX,
+                    shield=0,
                     width=16,
                     height=16})
     end
@@ -379,6 +379,10 @@ function update_enemies()
 end
 
 function hit(entity)
+    if entity.shield ~= nil and entity.shield > 0 then
+        entity.shield = entity.shield - 1
+        return
+    end
     entity.health = entity.health - 1
     if entity.health == 0 then
         kill(entity)
@@ -519,7 +523,7 @@ function shoot()
     if timeouts[TIMEOUT_SHOT] > 0 then
         return
     end
-    timeouts[TIMEOUT_SHOT] = 20
+    timeouts[TIMEOUT_SHOT] = 8
     bullet = {x=player.x+3, height=2, width=2}
     bullet.dx = 0
     if player.state == ENTITY_STATE_UPPER_ROW then
