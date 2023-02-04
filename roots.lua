@@ -113,6 +113,10 @@ TEETH = {
 -- timeouts
 TIMEOUT_SHOT = 1
 
+-- other
+PLAYER_SPEED = 2
+BULLET_SPEED = 2
+
 ------ GLOBAL VARIABLES ----------
 t = 0
 x_pos = 96
@@ -254,7 +258,7 @@ function update_game()
     update_player()
     update_enemies()
     update_bullets()
-    --update_timeouts()
+    update_timeouts()
 end
 
 function update_timeouts()
@@ -274,7 +278,8 @@ end
 
 function init_player()
     player = {
-        x = 0,
+        x = 16,
+        y = HEIGHT - 14,
         state = ENTITY_STATE_LOWER_ROW,
     }
 end
@@ -330,17 +335,8 @@ end
 
 -- spr(id x y colorkey=-1 scale=1 flip=0 rotate=0 w=1 h=1)
 function draw_player()
-    PLAYER_X_MIN = 16
-    PLAYER_X_MAX = WIDTH - 24
-
-    x_pos = PLAYER_X_MIN + player.x
-    if player.state == ENTITY_STATE_UPPER_ROW then
-        y_pos = 6
-    elseif player.state == ENTITY_STATE_LOWER_ROW then
-        y_pos = HEIGHT - 14
-    end
     spr(SPR_PLAYER[player.state].sprite,
-        x_pos,y_pos,BLACK,
+        player.x,player.y,BLACK,
         1, 0, SPR_PLAYER[player.state].rotation)
 end
 
@@ -348,8 +344,8 @@ function draw_bullets()
     for _, bullet in ipairs(bullets) do
         rect(bullet.x,
              bullet.y,
-             3,
-             3,
+             2,
+             2,
              ORANGE)
     end
 end
@@ -371,15 +367,15 @@ function handle_input_on_row()
         player.state = ENTITY_STATE_GOING_DOWN
     end
 
-    min_pos = 0
-    max_pos = 200
+    x_min = 16
+    x_max = 216
     if btn(BUTTON_LEFT) then
-        player.x = player.x - 1
-        player.x = math.max(player.x, min_pos)
+        player.x = player.x - PLAYER_SPEED
+        player.x = math.max(player.x, x_min)
     end
     if btn(BUTTON_RIGHT) then
-        player.x = player.x + 1
-        player.x = math.min(player.x, max_pos)
+        player.x = player.x + PLAYER_SPEED
+        player.x = math.min(player.x, x_max)
     end
     if btnp(BUTTON_Z) then
         shoot()
@@ -391,12 +387,14 @@ function shoot()
         return
     end
     timeouts[TIMEOUT_SHOT] = 20
-    bullet = {x=player.x, y=player.y}
+    bullet = {x=player.x+3}
     bullet.dx = 0
     if player.state == ENTITY_STATE_UPPER_ROW then
-        bullet.dy = 1
+        bullet.dy = BULLET_SPEED
+        bullet.y = player.y + 8
     elseif player.state == ENTITY_STATE_LOWER_ROW then
-        bullet.dy = -1
+        bullet.dy = 0 - BULLET_SPEED
+        bullet.y = player.y
     end
     add(bullets, bullet)
     -- spawn bullet
@@ -406,8 +404,10 @@ end
 function update_player()
     if player.state == ENTITY_STATE_GOING_UP then
         player.state = ENTITY_STATE_UPPER_ROW
+        player.y = 6
     elseif player.state == ENTITY_STATE_GOING_DOWN then
         player.state = ENTITY_STATE_LOWER_ROW
+        player.y = HEIGHT - 14
     end
 end
 
