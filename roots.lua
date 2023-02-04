@@ -70,8 +70,6 @@ SPR_TOOTH = {
     [ENTITY_STATE_DEFAULT] = {sprite=1, width=2, height=2},
 }
 SPR_LOGO = 33
-SPR_PLAYER = {
-    [ENTITY_STATE_ON_ROW
 SPR_PLAYER_STRAIGHT = 256
 SPR_PLAYER_TILTED = 257
 
@@ -166,6 +164,7 @@ function TIC()
     if state == STATE_INIT then
         --music(02)
         --state = STATE_MENU
+        init()
         state = STATE_GAME
         init_player()
     elseif state == STATE_MENU then
