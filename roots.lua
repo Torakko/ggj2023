@@ -523,7 +523,6 @@ function shoot()
     if timeouts[TIMEOUT_SHOT] > 0 then
         return
     end
-    timeouts[TIMEOUT_SHOT] = 8
     bullet = {x=player.x+3, height=2, width=2}
     bullet.dx = 0
     if player.state == ENTITY_STATE_UPPER_ROW then
@@ -535,6 +534,7 @@ function shoot()
     else
         return -- no shooting for now while changing side
     end
+    timeouts[TIMEOUT_SHOT] = 8
     sfx(SFX_SHOOT, 'E-1', 30, 0, 15)
     add(bullets, bullet)
     -- spawn bullet
