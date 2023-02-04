@@ -54,6 +54,7 @@ DIR_UP_RIGHT = 8
 STATE_INIT = 1
 STATE_MENU = 2
 STATE_GAME = 3
+STATE_GAME_OVER = 4
 
 -- entity states
 ENTITY_STATE_DAMAGED = 1
@@ -150,6 +151,7 @@ SODA_DATA = {
 
 ------ GLOBAL VARIABLES ----------
 t = 0
+game_over_t = 0
 x_pos = 96
 y_pos = 24
 state = STATE_INIT
@@ -216,8 +218,25 @@ function TIC()
     elseif state == STATE_GAME then
         update_game()
         draw_game()
+    elseif state == STATE_GAME_OVER then
+        uppdate_game_over()
+        draw_game_over()
     end
     t = t + 1
+end
+
+------ GAME_OVER ----------
+function uppdate_game_over()
+    if btnp(BUTTON_X) then
+        state = STATE_INIT
+    end
+end
+
+function draw_game_over()
+    cls(BLACK)
+    print_centered("Game over :(", 45, ORANGE, false, 2)
+    print_centered(string.format("Score %d", math.floor(game_over_t/60)), 70, ORANGE)
+    print_centered("Press X", 90, ORANGE)
 end
 
 ------ MENU ---------------
@@ -240,9 +259,6 @@ function init()
     music(01)
     teeth = {}
     enemies = {}
-    --candy = {}
-    --icecream = {}
-    --soda = {}
     spawn_teeth()
     init_player()
     timeouts = {[TIMEOUT_SHOT] = 0}
@@ -266,6 +282,9 @@ function spawn_teeth()
                     shield=0,
                     width=16,
                     height=16})
+    end
+    for i=row_x, teeth_in_row * 16, 16 do
+        local x = i
         local y = lower_row_y
         add(teeth, {name=string.format('tooth on %d,%d', x, y),
                     x=x,
@@ -324,6 +343,7 @@ function update_game()
     update_bullets()
     update_timeouts()
     update_teeth()
+    check_defeat()
 end
 
 function draw_timer()
@@ -371,6 +391,29 @@ function update_teeth()
     end
 end
 
+function check_defeat()
+    local dead_in_row = 0
+    local last_y = 0 -- to not count when going from upper to lower in the list
+    for _, tooth in ipairs(teeth) do
+        if tooth.dead == true then
+            if last_y == tooth.y then
+                dead_in_row = dead_in_row + 1
+                if dead_in_row == 3 then
+                   state = STATE_GAME_OVER
+                   game_over_t = t
+                   trace('GAME OVER!')
+                   return
+                end
+            else
+                dead_in_row = 1
+                last_y = tooth.y
+            end
+        else
+            dead_in_row = 0
+        end
+    end
+end
+
 function put_shield(tooth)
     tooth.shield = math.min(tooth.shield +1, 2)
 end
@@ -413,6 +456,7 @@ function hit(entity)
 end
 
 function kill(entity)
+    --trace(entity.name)
     entity.dead = true
 end
 
@@ -489,7 +533,7 @@ function draw_enemies()
 end
 
 function draw_enemy(enemy)
-    --trace(enemy.name)
+    --trace(entity.name)
     spr(enemy.sprite,
         enemy.x,
         enemy.y,
