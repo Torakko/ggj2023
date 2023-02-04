@@ -68,6 +68,15 @@ ENTITY_STATE_LOWER_ROW = 4
 ENTITY_STATE_GOING_UP = 5
 ENTITY_STATE_GOING_DOWN = 6
 
+-- sound effects
+SFX_HURT = 48
+SFX_ENEMY_HURT = 49
+SFX_SHOOT_PARTICLE = 50
+SFX_SWITCH_WEAPON = 51
+SFX_DEATH = 52
+SFX_SHOOT = 53
+SFX_MISSILE = 54
+
 -- sprites
 SPR_TOOTH = 1
 SPR_TOOTH_CRACK_1 = 3
@@ -197,7 +206,6 @@ end
 ------ FUNCTIONS -----------
 function TIC()
     if state == STATE_INIT then
-        --music(02)
         --state = STATE_MENU
         init()
         state = STATE_GAME
@@ -228,6 +236,7 @@ end
 ------ GAME ---------------
 function init()
     t = 0
+    music(01)
     teeth = {}
     candy = {}
     icecream = {}
@@ -490,7 +499,7 @@ function shoot()
         bullet.dy = 0 - BULLET_SPEED
         bullet.y = player.y
     end
-    sfx(0, 'G-3', 5, 0, 7)
+    sfx(SFX_SHOOT, 'E-1', 30, 0, 15)
     add(bullets, bullet)
     -- spawn bullet
     -- start timeout
