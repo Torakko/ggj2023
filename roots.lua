@@ -40,11 +40,6 @@ LIGHT_GREY = 13
 GREY = 14
 DARK_GREY = 15
 
--- tile flags
-TILE_SOLID = 0
-TILE_DEADLY = 1
-TILE_WINNING = 2
-
 -- directions
 DIR_UP = 1
 DIR_DOWN = 2
@@ -128,23 +123,29 @@ PLAYER_SPEED = 2
 BULLET_SPEED = 2
 TOOTH_HEALTH_MAX = 3
 
+ENEMY_CANDY = 1
+ENEMY_ICECREAM = 2
+ENEMY_SODA = 3
 CANDY_DATA = {
         name="Candy",
         sprite=SPR_CANDY,
         health=1,
         speed=0.5,
+        type=ENEMY_CANDY,
 }
 ICECREAM_DATA = {
         name="Icecream",
         sprite=SPR_ICECREAM,
         health=2,
         speed=0.25,
+        type=ENEMY_ICECREAM,
 }
 SODA_DATA = {
         name="Soda",
         sprite=SPR_SODA,
         health=3,
         speed=0.125,
+        type=ENEMY_SODA,
 }
 
 ------ GLOBAL VARIABLES ----------
@@ -238,9 +239,10 @@ function init()
     t = 0
     music(01)
     teeth = {}
-    candy = {}
-    icecream = {}
-    soda = {}
+    enemies = {}
+    --candy = {}
+    --icecream = {}
+    --soda = {}
     spawn_teeth()
     init_player()
     timeouts = {[TIMEOUT_SHOT] = 0}
@@ -260,28 +262,19 @@ function spawn_teeth()
                     y=y,
                     flip=2,
                     health=2,--TOOTH_HEALTH_MAX,
-                    shield=2})
+                    shield=2,
+                    width=16,
+                    height=16})
         local y = lower_row_y
         add(teeth, {name=string.format('tooth on %d,%d', x, y),
                     x=x,
                     y=y,
                     flip=0,
                     health=1,
-                    shield=1})
+                    shield=1,
+                    width=16,
+                    height=16})
     end
-end
-
-function spawn_tooth(data)
-    local new_tooth = {
-        name=string.format('tooth on %d,%d', data.x, data.y),
-        x=data.x,
-        y=data.y,
-        tileX=data.x,
-        tileY=data.y,
-        flip=data.flip,
-        health=2,
-    }
-    add(teeth,new_tooth)
 end
 
 function spawn_enemy(data)
@@ -301,23 +294,26 @@ function spawn_enemy(data)
         flip=0,
         health=data.health,
         direction=dir,
-        width=1,
-        height=1,
+        height=8,
+        width=8,
+        tile_width=1,
+        tile_height=1,
         speed=data.speed,
+        type=data.type,
     }
     return new_enemy
 end
 
 function spawn_candy()
-    add(candy,spawn_enemy(CANDY_DATA))
+    add(enemies,spawn_enemy(CANDY_DATA))
 end
 
 function spawn_icecream()
-    add(icecream,spawn_enemy(ICECREAM_DATA))
+    add(enemies,spawn_enemy(ICECREAM_DATA))
 end
 
 function spawn_soda()
-    add(soda,spawn_enemy(SODA_DATA))
+    add(enemies,spawn_enemy(SODA_DATA))
 end
 
 function update_game()
@@ -326,6 +322,7 @@ function update_game()
     update_enemies()
     update_bullets()
     update_timeouts()
+    update_teeth()
 end
 
 function update_timeouts()
@@ -334,10 +331,44 @@ function update_timeouts()
     end
 end
 
+function update_teeth()
+    for _, tooth in ipairs(teeth) do
+        for _, bullet in ipairs(bullets) do
+            if entity_collision(tooth, bullet) then
+                del(bullets, bullet)
+                put_shield(tooth)
+            end
+        end
+        for _, enemy in ipairs(enemies) do
+            if entity_collision(tooth, enemy) then
+                hit(tooth)
+                kill(enemy)
+            end
+        end
+    end
+end
+
+function put_shield(tooth)
+    tooth.shield = math.min(tooth.shield +1, 2)
+end
+
 function update_enemies()
-    move_enemy_list(candy)
-    move_enemy_list(icecream)
-    move_enemy_list(soda)
+    for _, enemy in ipairs(enemies) do
+        if enemy.direction == ENTITY_STATE_GOING_DOWN then
+            enemy.y = enemy.y+enemy.speed
+        elseif enemy.direction == ENTITY_STATE_GOING_UP then
+            enemy.y = enemy.y-enemy.speed
+        end
+        for _, bullet in ipairs(bullets) do
+            if entity_collision(enemy, bullet) then
+                hit(enemy)
+                del(bullets, bullet)
+            end
+        end
+        if enemy.dead then
+            del(enemies, enemy)
+        end
+    end
     if t % 50 == 0 then
         spawn_candy()
     elseif t % 90 == 0 then
@@ -347,14 +378,15 @@ function update_enemies()
     end
 end
 
-function move_enemy_list(list)
-    for _, enemy in ipairs(list) do
-        if enemy.direction == ENTITY_STATE_GOING_DOWN then
-            enemy.y = enemy.y+enemy.speed
-        elseif enemy.direction == ENTITY_STATE_GOING_UP then
-            enemy.y = enemy.y-enemy.speed
-        end
+function hit(entity)
+    entity.health = entity.health - 1
+    if entity.health == 0 then
+        kill(entity)
     end
+end
+
+function kill(entity)
+    entity.dead = true
 end
 
 function init_player()
@@ -371,9 +403,7 @@ function draw_game()
     32, 18, -- width, height
     0, 0) -- screen pos
     draw_teeth()
-    draw_enemy_list(candy)
-    draw_enemy_list(icecream)
-    draw_enemy_list(soda)
+    draw_enemies()
     draw_player()
     draw_bullets()
 end
@@ -417,8 +447,8 @@ function draw_tooth(tooth)
     end
 end
 
-function draw_enemy_list(list)
-    for _, enemy in ipairs(list) do
+function draw_enemies()
+    for _, enemy in ipairs(enemies) do
         draw_enemy(enemy)
     end
 end
@@ -432,8 +462,8 @@ function draw_enemy(enemy)
         1,
         0,
         0,
-        enemy.width,
-        enemy.height)
+        enemy.tile_width,
+        enemy.tile_height)
 end
 
 -- spr(id x y colorkey=-1 scale=1 flip=0 rotate=0 w=1 h=1)
@@ -449,7 +479,7 @@ function draw_bullets()
              bullet.y,
              2,
              2,
-             ORANGE)
+             LIGHT_BLUE)
     end
 end
 
@@ -480,7 +510,7 @@ function handle_input_on_row()
         player.x = player.x + PLAYER_SPEED
         player.x = math.min(player.x, x_max)
     end
-    if btnp(BUTTON_Z) then
+    if btn(BUTTON_Z) then
         shoot()
     end
 end
@@ -490,7 +520,7 @@ function shoot()
         return
     end
     timeouts[TIMEOUT_SHOT] = 20
-    bullet = {x=player.x+3}
+    bullet = {x=player.x+3, height=2, width=2}
     bullet.dx = 0
     if player.state == ENTITY_STATE_UPPER_ROW then
         bullet.dy = BULLET_SPEED
@@ -525,6 +555,52 @@ function update_bullets()
     end
 end
 
+-- generic collision box relative to upper left pixel
+function bounding_box(height, width)
+  setmetatable(values_table,{__index={x_min=1, x_max=6, y_min=1, y_max=6}})
+  local x_min, x_max, y_min, y_max =
+     values_table[1] or values_table.x_min,
+     values_table[2] or values_table.x_max,
+     values_table[3] or values_table.y_min,
+     values_table[4] or values_table.y_max
+  return {x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max}
+end
+
+function intersect(x1a,x1b,y1a,y1b, x2a,x2b,y2a,y2b)
+    return x1a < x2b and
+           x2a < x1b and
+           y1a < y2b and
+           y2a < y1b
+end
+
+function entity_collision(this, that)
+  local this_bbox = abs_bbox(this)
+  local that_bbox = abs_bbox(that)
+  return intersect(this_bbox.nw.x, this_bbox.ne.x, this_bbox.nw.y, this_bbox.sw.y,
+                   that_bbox.nw.x, that_bbox.ne.x, that_bbox.nw.y, that_bbox.sw.y)
+end
+
+-- Bounding box in absolute coordinates
+function abs_bbox(entity)
+  -- Corners are named north-west, north-east, etc.
+  return {nw={x=math.floor(entity.x),                     y=math.floor(entity.y)},
+          ne={x=math.floor(entity.x + get_width(entity)), y=math.floor(entity.y)},
+          sw={x=math.floor(entity.x),                     y=math.floor(entity.y + get_height(entity))},
+          se={x=math.floor(entity.x + get_width(entity)), y=math.floor(entity.y + get_height(entity))}}
+end
+
+function get_height(entity)
+    if entity.height == nil then
+        return 8
+    end
+    return entity.height
+end
+function get_width(entity)
+    if entity.width == nil then
+        return 8
+    end
+    return entity.width
+end
 
 -- <TILES>
 -- 000:2222222222222222222222222222222222222222222222222222222222222222
