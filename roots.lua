@@ -532,6 +532,8 @@ function shoot()
     elseif player.state == ENTITY_STATE_LOWER_ROW then
         bullet.dy = 0 - BULLET_SPEED
         bullet.y = player.y
+    else
+        return -- no shooting for now while changing side
     end
     sfx(SFX_SHOOT, 'E-1', 30, 0, 15)
     add(bullets, bullet)
