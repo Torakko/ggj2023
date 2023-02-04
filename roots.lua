@@ -117,6 +117,25 @@ TIMEOUT_SHOT = 1
 PLAYER_SPEED = 2
 BULLET_SPEED = 2
 
+CANDY_DATA = {
+        name="Candy",
+        sprite=SPR_CANDY,
+        health=1,
+        speed=0.5,
+}
+ICECREAM_DATA = {
+        name="Icecream",
+        sprite=SPR_ICECREAM,
+        health=2,
+        speed=0.25,
+}
+SODA_DATA = {
+        name="Soda",
+        sprite=SPR_SODA,
+        health=3,
+        speed=0.125,
+}
+
 ------ GLOBAL VARIABLES ----------
 t = 0
 x_pos = 96
@@ -209,6 +228,8 @@ function init()
     t = 0
     teeth = {}
     candy = {}
+    icecream = {}
+    soda = {}
     spawn_teeth()
     init_player()
     timeouts = {[TIMEOUT_SHOT] = 0}
@@ -235,28 +256,40 @@ function spawn_tooth(data)
     add(teeth,new_tooth)
 end
 
-function spawn_candy()
+function spawn_enemy(data)
     -- min_x = 5, max_x = 24
     local x = 5 + math.random() * (24-5)
     local dir = ENTITY_STATE_GOING_DOWN
     if math.random() > 0.5 then
         dir = ENTITY_STATE_GOING_UP
     end
-    local new_candy = {
-        name=string.format('Candy from %f', x),
-        sprite=SPR_CANDY,
+    local new_enemy = {
+        name=data.name,
+        sprite=data.sprite,
         x=x*8,
         y=8*8,
         tileX=x,
         tileY=y,
         flip=0,
-        health=1,
+        health=data.health,
         direction=dir,
         width=1,
         height=1,
-        speed=0.5,
+        speed=data.speed,
     }
-    add(candy,new_candy)
+    return new_enemy
+end
+
+function spawn_candy()
+    add(candy,spawn_enemy(CANDY_DATA))
+end
+
+function spawn_icecream()
+    add(icecream,spawn_enemy(ICECREAM_DATA))
+end
+
+function spawn_soda()
+    add(soda,spawn_enemy(SODA_DATA))
 end
 
 function update_game()
@@ -274,15 +307,25 @@ function update_timeouts()
 end
 
 function update_enemies()
-    for _, enemy in ipairs(candy) do
+    move_enemy_list(candy)
+    move_enemy_list(icecream)
+    move_enemy_list(soda)
+    if t % 50 == 0 then
+        spawn_candy()
+    elseif t % 90 == 0 then
+        spawn_icecream()
+    elseif t % 130 == 0 then
+        spawn_soda()
+    end
+end
+
+function move_enemy_list(list)
+    for _, enemy in ipairs(list) do
         if enemy.direction == ENTITY_STATE_GOING_DOWN then
             enemy.y = enemy.y+enemy.speed
         elseif enemy.direction == ENTITY_STATE_GOING_UP then
             enemy.y = enemy.y-enemy.speed
         end
-    end
-    if t % 50 == 0 then
-        spawn_candy()
     end
 end
 
@@ -300,7 +343,9 @@ function draw_game()
     32, 18, -- width, height
     0, 0) -- screen pos
     draw_teeth()
-    draw_enemies()
+    draw_enemy_list(candy)
+    draw_enemy_list(icecream)
+    draw_enemy_list(soda)
     draw_player()
     draw_bullets()
 end
@@ -324,8 +369,8 @@ function draw_tooth(tooth)
         sprite_data.height)
 end
 
-function draw_enemies()
-    for _, enemy in ipairs(candy) do
+function draw_enemy_list(list)
+    for _, enemy in ipairs(list) do
         draw_enemy(enemy)
     end
 end
