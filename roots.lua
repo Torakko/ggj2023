@@ -63,6 +63,10 @@ STATE_GAME = 3
 -- entity states
 ENTITY_STATE_DAMAGED = 1
 ENTITY_STATE_DEFAULT = 2
+ENTITY_STATE_UPPER_ROW = 3
+ENTITY_STATE_LOWER_ROW = 4
+ENTITY_STATE_GOING_UP = 5
+ENTITY_STATE_GOING_DOWN = 6
 
 -- sprites
 SPR_TOOTH = {
@@ -70,18 +74,16 @@ SPR_TOOTH = {
     [ENTITY_STATE_DEFAULT] = {sprite=1, width=2, height=2},
 }
 SPR_LOGO = 33
-SPR_PLAYER_STRAIGHT = 256
-SPR_PLAYER_TILTED = 257
 SPR_CANDY = 272
 SPR_ICECREAM = 273
 SPR_SODA = 274
 
--- player constants
-ROW_UPPER = 0
-ROW_LOWER = 1
-ENTITY_STATE_ON_ROW = 0
-ENTITY_STATE_GOING_UP = 1
-ENTITY_STATE_GOING_DOWN = 2
+SPR_PLAYER = {
+    [ENTITY_STATE_UPPER_ROW] = {sprite=256, rotation=2},
+    [ENTITY_STATE_LOWER_ROW] = {sprite=256},
+    [ENTITY_STATE_GOING_UP] = {sprite=256},
+    [ENTITY_STATE_GOING_DOWN] = {sprite=256}
+}
 
 
 -- entities
@@ -229,8 +231,7 @@ end
 function init_player()
     player = {
         x = 0,
-        row = ROW_LOWER,
-        state = ENTITY_STATE_ON_ROW,
+        state = ENTITY_STATE_LOWER_ROW,
     }
 end
 
@@ -271,19 +272,18 @@ function draw_player()
     PLAYER_X_MAX = WIDTH - 24
 
     x_pos = PLAYER_X_MIN + player.x
-    if player.row == ROW_UPPER then
+    if player.state == ENTITY_STATE_UPPER_ROW then
         y_pos = 6
-        rotation = 2
-    else
+    elseif player.state == ENTITY_STATE_LOWER_ROW then
         y_pos = HEIGHT - 14
-        rotation = 0
     end
-
-    spr(SPR_PLAYER_STRAIGHT,x_pos,y_pos,BLACK, 1, 0, rotation)
+    spr(SPR_PLAYER[player.state].sprite,
+        x_pos,y_pos,BLACK,
+        1, 0, SPR_PLAYER[player.state].rotation)
 end
 
 function handle_input()
-    if player.state == ENTITY_STATE_ON_ROW then
+    if player.state == ENTITY_STATE_LOWER_ROW or player.state == ENTITY_STATE_UPPER_ROW then
         handle_input_on_row()
     elseif player.state == ENTITY_STATE_GOING_UP or player.state == ENTITY_STATE_GOING_DOWN then
     end
@@ -293,9 +293,9 @@ function handle_input()
 end
 
 function handle_input_on_row()
-    if player.row == ROW_LOWER and btn(BUTTON_UP) then
+    if player.state == ENTITY_STATE_LOWER_ROW and btn(BUTTON_UP) then
         player.state = ENTITY_STATE_GOING_UP
-    elseif player.row == ROW_UPPER and btn(BUTTON_DOWN) then
+    elseif player.state == ENTITY_STATE_UPPER_ROW and btn(BUTTON_DOWN) then
         player.state = ENTITY_STATE_GOING_DOWN
     end
 
@@ -313,11 +313,9 @@ end
 
 function update_player()
     if player.state == ENTITY_STATE_GOING_UP then
-        player.row = ROW_UPPER
-        player.state = ENTITY_STATE_ON_ROW
+        player.state = ENTITY_STATE_UPPER_ROW
     elseif player.state == ENTITY_STATE_GOING_DOWN then
-        player.row = ROW_LOWER
-        player.state = ENTITY_STATE_ON_ROW
+        player.state = ENTITY_STATE_LOWER_ROW
     end
 end
 
