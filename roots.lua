@@ -70,6 +70,15 @@ SPR_TOOTH = {
     [ENTITY_STATE_DEFAULT] = {sprite=1, width=2, height=2},
 }
 SPR_LOGO = 33
+SPR_PLAYER_STRAIGHT = 256
+SPR_PLAYER_TILTED = 257
+
+-- player constants
+ROW_UPPER = 0
+ROW_LOWER = 1
+ENTITY_STATE_ON_ROW = 0
+ENTITY_STATE_GOING_UP = 1
+ENTITY_STATE_GOING_DOWN = 2
 
 
 -- entities
@@ -101,6 +110,7 @@ t = 0
 x_pos = 96
 y_pos = 24
 state = STATE_INIT
+player = {}
 
 ------ UTILITIES ------
 function add(list, elem)
@@ -154,6 +164,7 @@ function TIC()
     if state == STATE_INIT then
         --music(02)
         state = STATE_MENU
+        init_player()
     elseif state == STATE_MENU then
         update_menu()
         draw_menu()
@@ -207,6 +218,15 @@ end
 
 function update_game()
     handle_input()
+    update_player()
+end
+
+function init_player()
+    player = {
+        x = 0,
+        row = ROW_LOWER,
+        state = ENTITY_STATE_ON_ROW,
+    }
 end
 
 function draw_game()
@@ -237,20 +257,59 @@ function draw_tooth(tooth)
         sprite_data.height)
 end
 
+-- spr(id x y colorkey=-1 scale=1 flip=0 rotate=0 w=1 h=1)
 function draw_player()
-    spr(SPR_LOGO,x_pos,y_pos,GREY,1,0,0,2,2)
+    PLAYER_X_MIN = 16
+    PLAYER_X_MAX = WIDTH - 24
+
+    x_pos = PLAYER_X_MIN + player.x
+    if player.row == ROW_UPPER then
+        y_pos = 8
+    else
+        y_pos = HEIGHT - 16
+    end
+
+    spr(SPR_PLAYER_STRAIGHT,x_pos,y_pos,BLACK)
 end
 
 function handle_input()
-    if btn(BUTTON_UP) then y_pos = y_pos - 1 end
-    if btn(BUTTON_DOWN) then y_pos = y_pos + 1 end
-    if btn(BUTTON_LEFT) then x_pos = x_pos - 1 end
-    if btn(BUTTON_RIGHT) then x_pos = x_pos + 1 end
+    if player.state == ENTITY_STATE_ON_ROW then
+        handle_input_on_row()
+    elseif player.state == ENTITY_STATE_GOING_UP or player.state == ENTITY_STATE_GOING_DOWN then
+    end
     if btn(BUTTON_X) then
         state = STATE_MENU
     end
 end
 
+function handle_input_on_row()
+    if player.row == ROW_LOWER and btn(BUTTON_UP) then
+        player.state = ENTITY_STATE_GOING_UP
+    elseif player.row == ROW_UPPER and btn(BUTTON_DOWN) then
+        player.state = ENTITY_STATE_GOING_DOWN
+    end
+
+    min_pos = 0
+    max_pos = 200
+    if btn(BUTTON_LEFT) then
+        player.x = player.x - 1
+        player.x = math.max(player.x, min_pos)
+    end
+    if btn(BUTTON_RIGHT) then
+        player.x = player.x + 1
+        player.x = math.min(player.x, max_pos)
+    end
+end
+
+function update_player()
+    if player.state == ENTITY_STATE_GOING_UP then
+        player.row = ROW_UPPER
+        player.state = ENTITY_STATE_ON_ROW
+    elseif player.state == ENTITY_STATE_GOING_DOWN then
+        player.row = ROW_LOWER
+        player.state = ENTITY_STATE_ON_ROW
+    end
+end
 
 
 -- <TILES>
@@ -268,6 +327,11 @@ end
 -- 049:cacccccccaaaaaaacaaacaaacaaaaccccaaaaaaac8888888cc000cccecccccec
 -- 050:ccca00ccaaaa0ccecaaa0ceeaaaa0ceeaaaa0cee8888ccee000cceeecccceeee
 -- </TILES>
+
+-- <SPRITES>
+-- 000:000c4000000c40000094490000aaaa0009aaaa900aaaaaa09a0000a9a000000a
+-- 001:0c4000000c44000009a4900009aaa90009aaaa9009aaaaa909a0000a09a00000
+-- </SPRITES>
 
 -- <MAP>
 -- 002:000000000001010101010101010101010101010101010101010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
