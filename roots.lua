@@ -247,6 +247,7 @@ function init()
     init_player()
     timeouts = {[TIMEOUT_SHOT] = 0}
     bullets = {}
+    timer = 0
 end
 
 function spawn_teeth()
@@ -323,6 +324,28 @@ function update_game()
     update_bullets()
     update_timeouts()
     update_teeth()
+end
+
+function draw_timer()
+    local x = 4
+    local y = 4
+    number = math.floor(t / 60)
+    if number<1 then
+        print("0000",x,y)
+    elseif number<10 then
+        print("000",x,y)
+        print(number,x+6*3,y)
+    elseif number<100 then
+        print("00",x,y)
+        print(number,x+6*2,y)
+    elseif number<1000 then
+        print("0",x,y)
+        print(number,x+6,y)
+    elseif number<10000 then
+        print(number,x,y)
+    else
+        print(9999,x,y)
+    end
 end
 
 function update_timeouts()
@@ -404,12 +427,13 @@ end
 function draw_game()
     cls(DARK_GREY)
     map(0, 0, -- map coordinates
-    32, 18, -- width, height
-    0, 0) -- screen pos
+        32, 18, -- width, height
+        0, 0) -- screen pos
     draw_teeth()
     draw_enemies()
     draw_player()
     draw_bullets()
+    draw_timer()
 end
 
 function draw_teeth()
@@ -530,6 +554,7 @@ function shoot()
     if timeouts[TIMEOUT_SHOT] > 0 then
         return
     end
+    timeouts[TIMEOUT_SHOT] = 8
     bullet = {x=player.x+3, height=2, width=2}
     bullet.dx = 0
     if player.state == ENTITY_STATE_UPPER_ROW then
@@ -541,7 +566,6 @@ function shoot()
     else
         return -- no shooting for now while changing side
     end
-    timeouts[TIMEOUT_SHOT] = 8
     sfx(SFX_SHOOT, 'E-1', 30, 0, 15)
     add(bullets, bullet)
     -- spawn bullet
