@@ -420,6 +420,9 @@ end
 
 function draw_tooth(tooth)
     local tile_size = 2
+    if tooth.dead == true then
+        poke4(0x3FF0*2+WHITE, GREY)
+    end
     spr(SPR_TOOTH,
         tooth.x,
         tooth.y,
@@ -429,6 +432,10 @@ function draw_tooth(tooth)
         0,
         tile_size,
         tile_size)
+    if tooth.dead == true then
+        poke4(0x3FF0*2+WHITE, WHITE)
+        return -- no cracks or shild when dead
+    end
     if tooth.health < TOOTH_HEALTH_MAX then
         local sprite = nil
         if tooth.health == 2 then
