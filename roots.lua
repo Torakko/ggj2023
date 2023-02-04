@@ -200,6 +200,7 @@ end
 function init()
     t = 0
     teeth = {}
+    candy = {}
     spawn_teeth()
 end
 
@@ -220,12 +221,40 @@ function spawn_tooth(data)
         flip=data.flip,
         health=2,
     }
-    teeth[#teeth+1]=new_tooth
+    add(teeth,new_tooth)
+end
+
+function spawn_candy()
+    local y = 8 -- TODO randomise pos on the starting line
+    local new_candy = {
+        name=string.format('Candy from %d', y),
+        sprite=SPR_CANDY,
+        x=8*8,
+        y=y*8,
+        tileX=x,
+        tileY=y,
+        flip=0,
+        health=1,
+        direction=ENTITY_STATE_GOING_UP,
+        width=1,
+        height=1,
+    }
+    add(candy,new_candy)
 end
 
 function update_game()
     handle_input()
     update_player()
+    update_enemies()
+end
+
+function update_enemies()
+    for _, enemy in ipairs(candy) do
+        enemy.y = enemy.y+1 -- TODO care about enemy.direction
+    end
+    if t % 50 == 0 then
+        spawn_candy()
+    end
 end
 
 function init_player()
@@ -241,10 +270,8 @@ function draw_game()
     32, 18, -- width, height
     0, 0) -- screen pos
     draw_teeth()
+    draw_enemies()
     draw_player()
-    spr(SPR_CANDY,8*8,6*8,BLACK)
-    spr(SPR_ICECREAM,8*8,8*8,BLACK)
-    spr(SPR_SODA,8*8,10*8,BLACK)
 end
 
 function draw_teeth()
@@ -264,6 +291,25 @@ function draw_tooth(tooth)
         0,
         sprite_data.width,
         sprite_data.height)
+end
+
+function draw_enemies()
+    for _, enemy in ipairs(candy) do
+        draw_enemy(enemy)
+    end
+end
+
+function draw_enemy(enemy)
+    --trace(enemy.name)
+    spr(enemy.sprite,
+        enemy.x,
+        enemy.y,
+        BLACK,
+        1,
+        0,
+        0,
+        enemy.width,
+        enemy.height)
 end
 
 -- spr(id x y colorkey=-1 scale=1 flip=0 rotate=0 w=1 h=1)
