@@ -69,10 +69,11 @@ ENTITY_STATE_GOING_UP = 5
 ENTITY_STATE_GOING_DOWN = 6
 
 -- sprites
-SPR_TOOTH = {
-    [ENTITY_STATE_DAMAGED] = {sprite=3, width=2, height=2},
-    [ENTITY_STATE_DEFAULT] = {sprite=1, width=2, height=2},
-}
+SPR_TOOTH = 1
+SPR_TOOTH_CRACK_1 = 3
+SPR_TOOTH_CRACK_2 = 5
+SPR_TOOTH_SHIELD_1 = 7
+SPR_TOOTH_SHIELD_2 = 9
 SPR_LOGO = 33
 SPR_CANDY = 272
 SPR_ICECREAM = 273
@@ -116,6 +117,7 @@ TIMEOUT_SHOT = 1
 -- other
 PLAYER_SPEED = 2
 BULLET_SPEED = 2
+TOOTH_HEALTH_MAX = 3
 
 CANDY_DATA = {
         name="Candy",
@@ -237,33 +239,32 @@ function init()
 end
 
 function spawn_teeth()
-    row_x = 32
-    upper_row_y = 2
-    lower_row_y = HEIGHT - 18
-    teeth_in_row = 12
+    local row_x = 32
+    local upper_row_y = 2
+    local lower_row_y = HEIGHT - 18
+    local teeth_in_row = 12
     for i=row_x, teeth_in_row * 16, 16 do
-        x = i
-        y = upper_row_y
+        local x = i
+        local y = upper_row_y
         add(teeth, {name=string.format('tooth on %d,%d', x, y),
-                    sprites=SPR_TOOTH,
                     x=x,
                     y=y,
                     flip=2,
-                    health=2})
-        y = lower_row_y
+                    health=2,--TOOTH_HEALTH_MAX,
+                    shield=2})
+        local y = lower_row_y
         add(teeth, {name=string.format('tooth on %d,%d', x, y),
-                    sprites=SPR_TOOTH,
                     x=x,
                     y=y,
                     flip=0,
-                    health=2})
+                    health=1,
+                    shield=1})
     end
 end
 
 function spawn_tooth(data)
     local new_tooth = {
         name=string.format('tooth on %d,%d', data.x, data.y),
-        sprites=SPR_TOOTH,
         x=data.x,
         y=data.y,
         tileX=data.x,
@@ -276,7 +277,7 @@ end
 
 function spawn_enemy(data)
     -- min_x = 5, max_x = 24
-    local x = 5 + math.random() * (24-5)
+    local x = 3 + math.random() * (26-5)
     local dir = ENTITY_STATE_GOING_DOWN
     if math.random() > 0.5 then
         dir = ENTITY_STATE_GOING_UP
@@ -375,16 +376,36 @@ function draw_teeth()
 end
 
 function draw_tooth(tooth)
-    local sprite_data = tooth.sprites[tooth.health]
-    spr(sprite_data.sprite,
+    local tile_size = 2
+    spr(SPR_TOOTH,
         tooth.x,
         tooth.y,
         BLACK,
         1,
         tooth.flip,
         0,
-        sprite_data.width,
-        sprite_data.height)
+        tile_size,
+        tile_size)
+    if tooth.health < TOOTH_HEALTH_MAX then
+        local sprite = nil
+        if tooth.health == 2 then
+            sprite = SPR_TOOTH_CRACK_1
+        else
+            sprite = SPR_TOOTH_CRACK_2
+        end
+        spr(sprite,
+            tooth.x, tooth.y, BLACK, 1, tooth.flip, 0, tile_size, tile_size)
+    end
+    if tooth.shield > 0 then
+        local sprite = nil
+        if tooth.shield == 1 then
+            sprite = SPR_TOOTH_SHIELD_1
+        else
+            sprite = SPR_TOOTH_SHIELD_2
+        end
+        spr(sprite,
+            tooth.x, tooth.y, BLACK, 1, tooth.flip, 0, tile_size, tile_size)
+    end
 end
 
 function draw_enemy_list(list)
@@ -499,20 +520,22 @@ end
 -- 000:2222222222222222222222222222222222222222222222222222222222222222
 -- 001:000ccc0000cccccc0ccccccccccccccccccccccccccccccccccccccccccccccc
 -- 002:00ccc000cccccc00ccccccc0cccccccccccccccccccccccccccccccccccccccc
--- 003:000ccc0000cccccc0cccccccffccccccccffccccccccffcccccccffcccccccff
--- 004:0cccc000cccccf00ccccfc00cccfccd0ccfcccd0cffcccdecfccccdefcccccde
--- 005:000aaa0000a000aa0a000000a0000000a0000000a0000000a0000000a0000000
--- 006:00aaa000aa000a00000000a00000000a0000000a0000000a0000000a0000000a
--- 007:000bbb0000baaabb0ba000aaba000000ba000000ba000000ba000000ba000000
--- 008:00bbb000bbaaab00aa000ab0000000ab000000ab000000ab000000ab000000ab
+-- 003:0000000000f00000000f0000000f00000000f0000000f00000000ff00000f00f
+-- 005:0000000000f00000000f0000000f00000000f0000000f00000000ff00000f00f
+-- 006:0000000000000000000000f00000ff00000f000000f0000000000000f0000000
+-- 007:000aaa0000a000aa0a000000a0000000a0000000a0000000a0000000a0000000
+-- 008:00aaa000aa000a00000000a00000000a0000000a0000000a0000000a0000000a
+-- 009:000bbb0000baaabb0ba000aaba000000ba000000ba000000ba000000ba000000
+-- 010:00bbb000bbaaab00aa000ab0000000ab000000ab000000ab000000ab000000ab
 -- 017:cccccccccccccccccccccccccccccccccccccccc0ccccccc2ccccccc2cccc222
 -- 018:ccccccccccccccccccccccccccccccccccccccccccccccc0ccccccc2222cccc2
--- 019:cccccccfcccccfffcccfffcccfffccccfccccccccccccccccccccccccc222222
--- 020:fcccccdeffccccdecffcccdeccfffcdeccccffdeccccccdeccccccde2222ccde
--- 021:a0000000a0000000a0000000a0000000a00000000a0000000a000aaa0aaaa000
--- 022:0000000a0000000a0000000a0000000a0000000a000000a0aaa000a0000aaaa0
--- 023:ba000000ba000000ba000000ba000000ba0000000ba00aaa0baaabbb0bbbb000
--- 024:000000ab000000ab000000ab000000ab000000abaaa00ab0bbbaaab0000bbbb0
+-- 019:000f000000f00000000000000000000000000000000000000000000000000000
+-- 021:000f000000f000000f0f0000000f00000000f000000000000000000000000000
+-- 022:0f0000000f00f00000ff000000f00000000f0000000000000000000000000000
+-- 023:a0000000a0000000a0000000a0000000a00000000a0000000a0000000a000000
+-- 024:0000000a0000000a0000000a0000000a0000000a000000a0000000a0000000a0
+-- 025:ba000000ba000000ba000000ba000000ba0000000ba000000ba000000ba00000
+-- 026:000000ab000000ab000000ab000000ab000000ab00000ab000000ab000000ab0
 -- 033:eccccccccc888888caaaaaaaca888888cacccccccacc0ccccacc0ccccacc0ccc
 -- 034:ccccceee8888cceeaaaa0cee888a0ceeccca0ccc0cca0c0c0cca0c0c0cca0c0c
 -- 049:cacccccccaaaaaaacaaacaaacaaaaccccaaaaaaac8888888cc000cccecccccec
