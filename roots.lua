@@ -236,19 +236,25 @@ function spawn_tooth(data)
 end
 
 function spawn_candy()
-    local y = 8 -- TODO randomise pos on the starting line
+    -- min_x = 5, max_x = 24
+    local x = 5 + math.random() * (24-5)
+    local dir = ENTITY_STATE_GOING_DOWN
+    if math.random() > 0.5 then
+        dir = ENTITY_STATE_GOING_UP
+    end
     local new_candy = {
-        name=string.format('Candy from %d', y),
+        name=string.format('Candy from %f', x),
         sprite=SPR_CANDY,
-        x=8*8,
-        y=y*8,
+        x=x*8,
+        y=8*8,
         tileX=x,
         tileY=y,
         flip=0,
         health=1,
-        direction=ENTITY_STATE_GOING_UP,
+        direction=dir,
         width=1,
         height=1,
+        speed=0.5,
     }
     add(candy,new_candy)
 end
@@ -269,7 +275,11 @@ end
 
 function update_enemies()
     for _, enemy in ipairs(candy) do
-        enemy.y = enemy.y+1 -- TODO care about enemy.direction
+        if enemy.direction == ENTITY_STATE_GOING_DOWN then
+            enemy.y = enemy.y+enemy.speed
+        elseif enemy.direction == ENTITY_STATE_GOING_UP then
+            enemy.y = enemy.y-enemy.speed
+        end
     end
     if t % 50 == 0 then
         spawn_candy()
